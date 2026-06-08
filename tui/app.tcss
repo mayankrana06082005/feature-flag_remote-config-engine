@@ -1,0 +1,29 @@
+Screen {
+background: #1e1e1e;
+}
+
+DataTable {
+height: 100%;
+border: solid #333333;
+}
+
+DataTable > .datatable--header {
+text-style: bold;
+background: #2d2d2d;
+color: #00ffff;
+}
+
+.status-on {
+color: #00ff00;
+text-style: bold;
+}
+
+.status-off {
+color: #ff0000;
+text-style: bold;
+}
+
+.targeting-rule {
+color: #aaaaaa;
+text-style: italic;
+}

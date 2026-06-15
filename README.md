@@ -16,7 +16,7 @@ The Client SDK (Flutter/Dart): A strictly typed integration featuring persistent
 
 Zero Heavy Infrastructure: Runs entirely on Python, FastAPI, and SQLite. No Redis, Postgres, or Docker required.
 
-Deterministic Rollouts: Users are assigned to percentage buckets using a strict SHA-256 hashing algorithm (hash(user_id + flag_id) % 100). This ensures zero UI flickering across app reboots.
+Deterministic Rollouts: Users are assigned to percentage buckets using a strict SHA-256 hashing algorithm (hash(userId + flagId) % 100). This ensures zero UI flickering across app reboots.
 
 Contextual Group Targeting: Serve features exclusively to specific user cohorts (e.g., beta_testers, internal_admins) via nested JSON payload evaluations.
 
@@ -37,6 +37,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 
 
+
 Server runs on http://localhost:8000
 
 2. Launch the Control Plane (TUI)
@@ -45,6 +46,7 @@ Manage your flags locally through the terminal interface.
 
 # Run the Textual app
 python tui.py 
+
 
 
 Navigation: Use arrow keys to select flags.
@@ -83,6 +85,7 @@ void main() async {
 }
 
 
+
 Evaluating Flags (Booleans)
 
 Use isEnabled for standard ON/OFF UI toggles. The SDK will automatically handle background telemetry if the state changes.
@@ -100,6 +103,7 @@ Widget buildCheckoutButton() {
 }
 
 
+
 Evaluating Remote Configs (Data)
 
 Use getConfig to retrieve strings, numbers, or complex JSON structures without hardcoding them into the app.
@@ -110,6 +114,7 @@ Widget buildBanner() {
   
   return Text(bannerText);
 }
+
 
 
 Real-Time UI Rebuilds
@@ -124,14 +129,14 @@ StreamBuilder<void>(
 )
 
 
+
 🧪 Mathematical Verification Protocol
 
 This engine was built with rigorous mathematical distribution testing. To verify the integrity of the deterministic hashing engine at scale, a Monte Carlo simulation was executed.
 
 Test Protocol: $10,000$ unique UUID strings were processed through the algorithm:
 
-
-$$H = \text{SHA-256}(\text{user\_id} + \text{":"} + \text{flag\_id})$$
+$$H = \text{SHA-256}(\text{userId} + \text{":"} + \text{flagId})$$
 
 $$Bucket = \text{int}(H, 16) \pmod{100}$$
 

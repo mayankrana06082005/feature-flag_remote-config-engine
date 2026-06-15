@@ -8,6 +8,11 @@ from database import get_db
 from models import FlagCreate, FlagUpdate, FlagResponse
 from services.broadcaster import broadcaster
 
+from routers.sse import broadcast_update
+
+from pydantic import BaseModel
+#from datetime import datetime, timezone
+
 router = APIRouter(prefix="/flags", tags=["Flags"])
 
 def format_flag_row(row: dict) -> dict:
@@ -62,7 +67,8 @@ async def create_flag(flag: FlagCreate, db: Connection = Depends(get_db)):
     async with db.execute("SELECT * FROM flags WHERE id = ?", (flag.id,)) as cursor:
         row = await cursor.fetchone()
         flag_data = format_flag_row(row)
-        await broadcaster.broadcast("flag_updated", flag_data)
+        #await broadcaster.broadcast("flag_updated", flag_data)
+        await broadcast_update()
         return flag_data
 
 @router.patch("/{flag_id}", response_model=FlagResponse)
@@ -105,7 +111,8 @@ async def update_flag(flag_id: str, flag_update: FlagUpdate, db: Connection = De
     async with db.execute("SELECT * FROM flags WHERE id = ?", (flag_id,)) as cursor:
         updated_row = await cursor.fetchone()
         flag_data = format_flag_row(updated_row)
-        await broadcaster.broadcast("flag_updated", flag_data)
+        #await broadcaster.broadcast("flag_updated", flag_data)
+        await broadcast_update()
         return flag_data
 
 @router.delete("/{flag_id}")
@@ -113,5 +120,26 @@ async def delete_flag(flag_id: str, db: Connection = Depends(get_db)):
     """Delete a feature flag completely."""
     await db.execute("DELETE FROM flags WHERE id = ?", (flag_id,))
     await db.commit()
-    await broadcaster.broadcast("flag_deleted", {"id": flag_id})
+    #await broadcaster.broadcast("flag_deleted", {"id": flag_id})
+    await broadcast_update()
     return {"message": "Flag deleted successfully"}
+
+class MetricPayload(BaseModel):
+    user_id: str
+    flag_id: str
+    evaluation_result: bool
+    timestamp: str
+
+@router.post("/metrics")
+async def log_telemetry(metric: MetricPayload):
+    """Receives silent telemetry events from the Flutter SDK."""
+    # In a real production app, you would save this to an analytics table.
+    # For now, we will print a massive alert to the terminal to prove it works!
+    print("\n" + "="*50)
+    print(f"📊 TELEMETRY RECEIVED")
+    print(f"👤 User:   {metric.user_id}")
+    print(f"🚩 Flag:   {metric.flag_id}")
+    print(f"✅ Result: {metric.evaluation_result}")
+    print("="*50 + "\n")
+    
+    return {"status": "logged"}

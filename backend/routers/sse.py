@@ -1,53 +1,49 @@
-from fastapi import APIRouter, Request, Query
-from sse_starlette.sse import EventSourceResponse
 import asyncio
-import json
+from fastapi import APIRouter, Request
+from sse_starlette.sse import EventSourceResponse
 
-from services.broadcaster import broadcaster
-from services.targeting import evaluate_flag
+router = APIRouter()
 
-
-router = APIRouter(tags=["Stream"])
+active_connections = []
 
 @router.get("/stream")
-async def stream(
-    request: Request, 
-    userId: str = Query(..., description="Unique ID of the connecting user"), 
-    groups: str = Query("", description="Comma-separated list of groups")
-):
-    """
-    Maintains an open SSE connection. Evaluates targeting rules on the fly 
-    and pushes personalized updates down the stream.
-    """
-    q = broadcaster.subscribe()
-    
-    user_context = {
-        "userId": userId,
-        "groups": [g.strip() for g in groups.split(",")] if groups else []
-    }
-    
+async def stream(request: Request):
+    queue = asyncio.Queue()
+    active_connections.append(queue)
+
     async def event_generator():
+        # 1. Immediate greeting so the browser knows the connection is alive!
+        yield {
+            "event": "connected",
+            "data": "Stream established"
+        }
+        
         try:
             while True:
                 if await request.is_disconnected():
                     break
                 
+                # 2. Wait for a database update, but wake up every 15 seconds!
                 try:
-                    event = await asyncio.wait_for(q.get(), timeout=15.0)
-                    
-                    if event["event"] == "flag_updated":
-                        flag_data = event["data"]
-                        is_enabled = evaluate_flag(flag_data, user_context)
-                        
-                        payload = {"id": flag_data["id"], "enabled": is_enabled}
-                        yield {"event": "flag_updated", "data": json.dumps(payload)}
-                    
-                    elif event["event"] == "config_updated":
-                        yield {"event": "config_updated", "data": json.dumps(event["data"])}
-                        
+                    event_data = await asyncio.wait_for(queue.get(), timeout=15.0)
+                    yield {
+                        "event": "update",
+                        "data": event_data
+                    }
                 except asyncio.TimeoutError:
-                    pass
+                    # 3. Send a heartbeat ping to keep Edge from killing the socket
+                    yield {
+                        "event": "ping",
+                        "data": "keep-alive"
+                    }
+        except asyncio.CancelledError:
+            pass
         finally:
-            broadcaster.unsubscribe(q)
-            
+            if queue in active_connections:
+                active_connections.remove(queue)
+
     return EventSourceResponse(event_generator())
+
+async def broadcast_update():
+    for connection_queue in active_connections:
+        await connection_queue.put("state_mutated")

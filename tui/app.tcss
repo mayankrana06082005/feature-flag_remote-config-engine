@@ -27,3 +27,12 @@ text-style: bold;
 color: #aaaaaa;
 text-style: italic;
 }
+
+.modal-dialog {
+    align: center middle;
+    background: $surface;
+    padding: 1 2;
+    border: solid $primary;
+    width: 60; /* Optional: Sets a fixed width for the popup */
+    height: auto; /* Optional: Lets the box shrink to fit the form contents */
+}

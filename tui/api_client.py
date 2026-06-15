@@ -22,6 +22,12 @@ class BackendClient:
             )
             response.raise_for_status()
             return response.json()
+    
+    async def create_config(self, config_data: dict) -> Dict[str, Any]:
+        async with httpx.AsyncClient(base_url=self.base_url) as client:
+            response = await client.post("/configs", json=config_data)
+            response.raise_for_status()
+            return response.json()
 
     async def delete_flag(self, flag_id: str) -> None:
         async with httpx.AsyncClient(base_url=self.base_url) as client:
@@ -31,6 +37,24 @@ class BackendClient:
     async def list_configs(self) -> List[Dict[str, Any]]:
         async with httpx.AsyncClient(base_url=self.base_url) as client:
             response = await client.get("/configs")
+            response.raise_for_status()
+            return response.json()
+    
+    async def create_flag(self, flag_data: dict) -> Dict[str, Any]:
+        async with httpx.AsyncClient(base_url=self.base_url) as client:
+            response = await client.post("/flags", json=flag_data)
+            response.raise_for_status()
+            return response.json()
+
+    async def update_flag(self, flag_id: str, flag_update: dict) -> Dict[str, Any]:
+        async with httpx.AsyncClient(base_url=self.base_url) as client:
+            response = await client.patch(f"/flags/{flag_id}", json=flag_update)
+            response.raise_for_status()
+            return response.json()
+
+    async def update_config(self, config_id: str, config_update: dict) -> Dict[str, Any]:
+        async with httpx.AsyncClient(base_url=self.base_url) as client:
+            response = await client.patch(f"/configs/{config_id}", json=config_update)
             response.raise_for_status()
             return response.json()
 

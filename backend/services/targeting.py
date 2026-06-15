@@ -16,9 +16,14 @@ def evaluate_flag(flag: dict, user_context: dict) -> bool:
         return True
     
     elif rule_type == "group":
-        user_groups = user_context.get("groups", [])
+        # 1. Grab the nested 'context' dictionary that Flutter sends
+        inner_context = user_context.get("context", {})
+        
+        # 2. Extract the groups from that inner dictionary
+        user_groups = inner_context.get("groups", [])
         rule_groups = rule.get("groups", [])
-        # Returns True if there's any intersection between user groups and rule groups
+        
+        # Returns True if there's any intersection
         return bool(set(rule_groups) & set(user_groups))
     
     elif rule_type == "user_ids":

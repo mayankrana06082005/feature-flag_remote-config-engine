@@ -9,17 +9,18 @@ from services.targeting import evaluate_flag
 
 router = APIRouter(tags=["Evaluation"])
 
+# UPDATED SCHEMA TO MATCH FLUTTER
 class EvaluationContext(BaseModel):
-    userId: str
-    groups: List[str] = []
+    user_id: str
+    context: Dict[str, Any] = {}
 
 @router.post("/evaluate")
-async def evaluate_all(context: EvaluationContext, db: Connection = Depends(get_db)):
+async def evaluate_all(context_payload: EvaluationContext, db: Connection = Depends(get_db)):
     """
     Evaluates all flags against the provided user context and returns 
     a consolidated dictionary of active flags and configurations.
     """
-    user_context_dict = context.model_dump()
+    user_context_dict = context_payload.model_dump()
     
     evaluated_flags: Dict[str, bool] = {}
     async with db.execute("SELECT id, enabled, targeting_rule FROM flags") as cursor:
